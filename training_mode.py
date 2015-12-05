@@ -9,17 +9,22 @@ class TrainingMode:
 	ALREADY_TRAINED = False 			# Variable to ignore keystroke events from facerec.py when training was already started
 	FACES_ROOT_PATH = "faces"
 	FACE_PATH = ""
-	MODEL_PATH = None
-	MODEL_NAME = "foo_model" 	# for newly created models. TODO: Replace with parameter
+	MODEL_PATH = None 	# for existing models
+	MODEL_NAME = None 	# for newly created models
 
-	def __init__(self, model):
+	def __init__(self, existing_model, new_model_name):
 		print "Entering training mode. Make sure that only the desired training face is visible to the camera."
 
-		if model is None:
-			print "No model given, creating new one."
-		else:
+		if existing_model is None and new_model_name is not None:
+			print "No model given, creating new one with name '" + new_model_name + "'."
+			self.MODEL_NAME = new_model_name
+
+		elif existing_model is not None and new_model_name is None:
 			print "Model given at '" + model + "', updating with new date."
 			self.MODEL_PATH = model
+		else:
+			print "Wrong arguments, quitting"
+			return
 
 		self.image_count = 0
 		self.setup_directory_structure()

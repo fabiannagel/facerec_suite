@@ -12,7 +12,7 @@ def draw_bounding_box(faces):
 ap = argparse.ArgumentParser()
 
 group = ap.add_mutually_exclusive_group(required=True)
-group.add_argument("--train", action="store_true", help="Create a new face recognition model")
+group.add_argument("--train", help="Create a new face recognition model")
 group.add_argument("--update-model", help="Update an existing face recognition model")
 group.add_argument("--model", help="Path for existing face recognition model")
 group.add_argument("--clear", help="Clear all data (models and images)") # TODO
@@ -22,20 +22,18 @@ args = vars(ap.parse_args())
 frame_class = None 	# Class to which every grabbed frame will be delivered
 
 if args["train"]:
-	frame_class = TrainingMode(None)
+	new_model_name = args["train"]
+	frame_class = TrainingMode(None, new_model_name)
 
 if args["update_model"]:
 	model_path = args["update_model"]
 	# TODO: Check if file exists
-	frame_class = TrainingMode(model_path)
+	frame_class = TrainingMode(model_path, None)
 
 if args["model"]:
 	model_path = args["model"]	# Model file
 	# TODO: Check if file exists
 	frame_class = ModelMode(model_path)
-	
-
-
 
 # Face detection is needed in all modes
 face_detector = FaceDetector("haarcascade_frontalface_default.xml")
