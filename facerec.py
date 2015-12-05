@@ -6,8 +6,7 @@ from face_detector import FaceDetector
 from training_mode import TrainingMode
 from model_mode import ModelMode
 
-def draw_bounding_box(faces):
-	print "foo"
+ROI = None
 
 ap = argparse.ArgumentParser()
 
@@ -45,13 +44,12 @@ while(True):	# Main loop
 
     faces = face_detector.detect(frame)
     for (x, y, w, h) in faces:
-		ROI = frame[y: y+h, x: x+w]		 	# Face region
+		ROI = frame[y: y+h, x: x+w]		 	# Face region, TODO: Handle multiple faces here?
 		cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255))
 
     cv2.imshow('frame', frame)
-    if cv2.waitKey(1) & 0xFF == ord('p'):
-    	if frame_class.consume(ROI, faces):
-    		break
+    if frame_class.consume(ROI, faces):
+    	break
 
 cap.release()
 cv2.destroyAllWindows()

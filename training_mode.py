@@ -50,6 +50,9 @@ class TrainingMode:
 			i += 1
 
 	def consume(self, frame, faces):
+		if not cv2.waitKey(1) & 0xFF == ord('p'):
+			return
+			
 		if self.image_count == 3:
 			if self.ALREADY_TRAINED:
 				return
