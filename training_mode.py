@@ -11,8 +11,10 @@ class TrainingMode:
 	FACE_PATH = ""
 	MODEL_PATH = None 	# for existing models
 	MODEL_NAME = None 	# for newly created models
+	EXIT_FLAG = False
+	IMAGE_COUNT = 50
 
-	def __init__(self, existing_model, new_model_name):
+	def __init__(self, person_name, existing_model, new_model_name):
 		print "Entering training mode. Make sure that only the desired training face is visible to the camera."
 
 		if existing_model is None and new_model_name is not None:
@@ -43,17 +45,26 @@ class TrainingMode:
 		i = 1
 		while True:
 			if not os.path.exists(self.FACES_ROOT_PATH + "/" + str(i)):
+
+				# TODO: The labels for OpenCV need to be numeric values. Use the label for person's names and generate a number out of it?
 				self.face_label = str(i)
 				self.FACE_PATH = self.FACES_ROOT_PATH + "/" + str(i)
 				os.makedirs(self.FACE_PATH)
 				break
 			i += 1
 
-	def consume(self, frame, faces):
+	def consume(self, frame, ROIs, ROIs_coordinates, faces):
+		if len(ROIs) == 1:
+			ROI_x = ROIs_coordinates[0][0]
+			ROI_y = ROIs_coordinates[0][1]
+			ROI_w = ROIs[0].shape[0]
+			ROI_h = ROIs[0].shape[1]
+			cv2.rectangle(frame, (ROI_x, ROI_y), (ROI_x+ROI_w, ROI_y+ROI_h), (0, 0, 255))
+
 		if not cv2.waitKey(1) & 0xFF == ord('p'):
-			return
-			
-		if self.image_count == 3:
+			return frame
+
+		if self.image_count == self.IMAGE_COUNT:
 			if self.ALREADY_TRAINED:
 				return
 
@@ -61,7 +72,8 @@ class TrainingMode:
 			images, labels = self.get_images_and_labels(self.FACE_PATH)
 			recognizer = cv2.createLBPHFaceRecognizer()
 			self.train_recognizer(recognizer, images, labels)
-			return True
+			self.EXIT_FLAG = True
+			return
 
 		if len(faces) > 1:
 			print "Detected more than one face. Skipping frame ..."
@@ -72,8 +84,10 @@ class TrainingMode:
 			return None
 
 		self.image_count += 1
-		cv2.imwrite(self.FACE_PATH + "/" + str(self.image_count) + self.FRAMECAPTURE_EXTENSION, frame)
+		cv2.imwrite(self.FACE_PATH + "/" + str(self.image_count) + self.FRAMECAPTURE_EXTENSION, ROIs[0])
 		print "Saved image!"
+
+		return frame
 
 
 	def get_images_and_labels(self, path):

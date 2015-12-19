@@ -1,6 +1,7 @@
 import cv2, os
 import numpy as np
 import argparse
+import sys
 
 from face_detector import FaceDetector
 from training_mode import TrainingMode
@@ -22,7 +23,13 @@ frame_class = None 	# Class to which every grabbed frame will be delivered
 
 if args["train"]:
 	new_model_name = args["train"]
-	frame_class = TrainingMode(None, new_model_name)
+
+	person_name = None
+	while person_name is None or person_name == "":
+		person_name = raw_input("Please enter the person's name: ")
+
+
+	frame_class = TrainingMode(person_name, None, new_model_name)
 
 if args["update_model"]:
 	model_path = args["update_model"]
@@ -40,16 +47,23 @@ cap = cv2.VideoCapture(0)
 
 while(True):	# Main loop
     ret, frame = cap.read()
-    frame = cv2.resize(frame, (0, 0), fx = 0.3, fy = 0.3)
+    frame = cv2.resize(frame, (0, 0), fx = 0.5, fy = 0.5)
+
+    ROIs = []					# Array for segmeted faces
+    ROIs_coordinates = []		# Array for x,y coordinates of segmented faces to draw bounding boxes
 
     faces = face_detector.detect(frame)
     for (x, y, w, h) in faces:
-		ROI = frame[y: y+h, x: x+w]		 	# Face region, TODO: Handle multiple faces here?
-		cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255))
+		ROIs.append(frame[y: y+h, x: x+w])		 	
+		ROIs_coordinates.append((x, y))
+		# cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255))
+
+    frame = frame_class.consume(frame, ROIs, ROIs_coordinates, faces)
+    if frame_class.EXIT_FLAG:
+    	break
 
     cv2.imshow('frame', frame)
-    if frame_class.consume(ROI, faces):
-    	break
+
 
 cap.release()
 cv2.destroyAllWindows()
